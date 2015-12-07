@@ -135,6 +135,7 @@ public class Connection {
     public void close() {
         LogManager.getLogger(this).info("Closing  connection: " + this);
         channel.disconnect();
+        group.shutdownGracefully();
     }
 
     public NSQFrame commandAndWait(final NSQCommand command) throws TimeoutException {
