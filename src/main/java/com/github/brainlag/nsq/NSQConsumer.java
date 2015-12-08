@@ -134,6 +134,7 @@ public class NSQConsumer {
     public void shutdown() {
         scheduler.shutdown();
         cleanClose();
+        Connection.shutdown();
     }
 
     private void cleanClose() {
@@ -147,7 +148,6 @@ public class NSQConsumer {
                         throw new IllegalStateException(err);
                     }
                 }
-                connection.close();
             }
         } catch (final TimeoutException e) {
             LogManager.getLogger(this).warn("No clean disconnect", e);

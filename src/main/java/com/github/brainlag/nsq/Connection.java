@@ -135,6 +135,10 @@ public class Connection {
     public void close() {
         LogManager.getLogger(this).info("Closing  connection: " + this);
         channel.disconnect();
+    }
+
+    static void shutdown() {
+        LogManager.getLogger(Connection.class).info("Closing  EventLoopGroup");
         group.shutdownGracefully();
     }
 
