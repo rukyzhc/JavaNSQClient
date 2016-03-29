@@ -8,6 +8,7 @@ import com.github.brainlag.nsq.frames.MessageFrame;
 import com.github.brainlag.nsq.frames.NSQFrame;
 import com.github.brainlag.nsq.frames.ResponseFrame;
 import com.github.brainlag.nsq.netty.NSQClientInitializer;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -17,6 +18,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.AttributeKey;
+
 import org.apache.logging.log4j.LogManager;
 
 import java.net.InetSocketAddress;
@@ -24,6 +26,7 @@ import java.util.Date;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 public class Connection {
     public static final byte[] MAGIC_PROTOCOL_VERSION = "  V2".getBytes();
@@ -31,7 +34,7 @@ public class Connection {
             AttributeKey.valueOf("Connection.state");
     private final ServerAddress address;
     private final Channel channel;
-    private NSQConsumer consumer = null;
+    private Consumer<NSQMessage> consumer = null;
     private NSQErrorCallback errorCallback = null;
     private final LinkedBlockingQueue<NSQCommand> requests = new LinkedBlockingQueue<>(1);
     private final LinkedBlockingQueue<NSQFrame> responses = new LinkedBlockingQueue<>(1);
@@ -127,7 +130,7 @@ public class Connection {
             message.setId(msg.getMessageId());
             message.setMessage(msg.getMessageBody());
             message.setTimestamp(new Date(TimeUnit.NANOSECONDS.toMillis(msg.getTimestamp())));
-            consumer.processMessage(message);
+            consumer.accept(message);
             return;
         }
         LogManager.getLogger(this).warn("Unknown frame type: " + frame);
@@ -187,7 +190,7 @@ public class Connection {
         return config;
     }
 
-    public void setConsumer(final NSQConsumer consumer) {
+    public void setConsumer(final Consumer<NSQMessage> consumer) {
         this.consumer = consumer;
     }
 }
