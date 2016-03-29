@@ -8,7 +8,6 @@ import com.google.common.collect.Sets;
 
 import org.apache.logging.log4j.LogManager;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -56,15 +55,10 @@ public class NSQConsumer extends NSQConsumerBase {
         return this;
     }
 
-    public void shutdown() {
-        scheduler.shutdown();
-        cleanClose();
-    }
-
-    private void cleanClose() {
+    protected void cleanClose() {
         try {
             for (final Connection connection : connections.values()) {
-                cleanClose(connection);
+                closeConnection(connection);
             }
         } catch (final TimeoutException e) {
             LogManager.getLogger(this).warn("No clean disconnect", e);
@@ -123,8 +117,4 @@ public class NSQConsumer extends NSQConsumerBase {
         return lookup.lookup(topic);
     }
 
-    @Override
-    public void close() throws IOException {
-        shutdown();
-    }
 }

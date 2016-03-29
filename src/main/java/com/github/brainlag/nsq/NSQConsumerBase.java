@@ -53,6 +53,14 @@ public abstract class NSQConsumerBase implements Consumer<NSQMessage>,
 
     public abstract NSQConsumerBase start();
 
+    @Override
+    public void close() {
+        scheduler.shutdown();
+        cleanClose();
+    }
+
+    protected abstract void cleanClose();
+
     protected Connection createConnection(final ServerAddress serverAddress) {
         try {
             final Connection connection = new Connection(serverAddress, config);
@@ -69,6 +77,18 @@ public abstract class NSQConsumerBase implements Consumer<NSQMessage>,
                     "Could not create connection to server {}",
                     serverAddress.toString(), e);
             return null;
+        }
+    }
+
+    protected void closeConnection(Connection connection)
+            throws TimeoutException {
+        final NSQCommand command = NSQCommand.instance("CLS");
+        final NSQFrame frame = connection.commandAndWait(command);
+        if (frame != null && frame instanceof ErrorFrame) {
+            final String err = ((ErrorFrame) frame).getErrorMessage();
+            if (err.startsWith("E_INVALID")) {
+                throw new IllegalStateException(err);
+            }
         }
     }
 
@@ -180,17 +200,6 @@ public abstract class NSQConsumerBase implements Consumer<NSQMessage>,
             this.executor = executor;
         }
         return this;
-    }
-
-    protected void cleanClose(Connection connection) throws TimeoutException {
-        final NSQCommand command = NSQCommand.instance("CLS");
-        final NSQFrame frame = connection.commandAndWait(command);
-        if (frame != null && frame instanceof ErrorFrame) {
-            final String err = ((ErrorFrame) frame).getErrorMessage();
-            if (err.startsWith("E_INVALID")) {
-                throw new IllegalStateException(err);
-            }
-        }
     }
 
 }
